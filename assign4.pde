@@ -12,6 +12,7 @@ final int GRASS_HEIGHT = 15;
 final int SOIL_COL_COUNT = 8;
 final int SOIL_ROW_COUNT = 24;
 final int SOIL_SIZE = 80;
+final int LIFE_W = 50, LIFE_H = 51;
 
 int[][] soilHealth;
 
@@ -31,6 +32,7 @@ boolean leftState = false;
 boolean rightState = false;
 boolean downState = false;
 int playerHealth = 2;
+int healthLeft = playerHealth;
 final int PLAYER_MAX_HEALTH = 5;
 int playerMoveDirection = 0;
 int playerMoveTimer = 0;
@@ -117,9 +119,20 @@ void setup() {
   }   
 
 	// Initialize soidiers and their position
+    soldierX = new float [6];
+    soldierY = new float [6];
+    for (int i = 0; i < 6 ; i++) {
+      soldierX[i] = random(width - SOIL_SIZE);
+      soldierY[i] = floor(random(4));
+    }
 
 	// Initialize cabbages and their position
-
+    cabbageX = new float [6];
+    cabbageY = new float [6];
+    for (int i = 0; i < 6 ; i++) {
+      cabbageX[i] = floor(random(SOIL_COL_COUNT));
+      cabbageY[i] = floor(random(4));
+    }
 }
 
 void draw() {
@@ -240,7 +253,11 @@ void draw() {
 
 		// Cabbages
 		// > Remember to check if playerHealth is smaller than PLAYER_MAX_HEALTH!
-
+    
+    for (int i = 0; i < 6 ; i++) {
+      image(cabbage, cabbageX[i] * SOIL_SIZE, (cabbageY[i] + 4*i) * SOIL_SIZE);
+    }
+    
 		// Groundhog
 
 		PImage groundhogDisplay = groundhogIdle;
@@ -250,10 +267,11 @@ void draw() {
 
 			// HINT:
 			// You can use playerCol and playerRow to get which soil player is currently on
-      
-      if (soilEmptyList[playerCol][playerRow + 1] == true){
-        playerY += SOIL_SIZE;
-        playerRow += 1;
+      if (playerRow < 23){
+        if (soilEmptyList[playerCol][playerRow + 1] == true){
+          playerY += SOIL_SIZE;
+          playerRow += 1;
+        }
       }
     
 			// Check if "player is NOT at the bottom AND the soil under the player is empty"
@@ -369,6 +387,42 @@ void draw() {
 		// > Remember to stop player's moving! (reset playerMoveTimer)
 		// > Remember to recalculate playerCol/playerRow when you reset playerX/playerY!
 		// > Remember to reset the soil under player's original position!
+    for (int i = 0; i < 6 ; i++) {
+      image(soldier, soldierX[i], (soldierY[i] + 4*i) * SOIL_SIZE);
+      soldierX[i] += soldierSpeed;
+      if (soldierX[i] > width) {
+        soldierX[i] = -SOIL_SIZE;
+      }
+    }
+
+    //bump into cabbage
+    for (int i = 0; i < 6; i++){
+      if (playerX < cabbageX[i] * SOIL_SIZE + SOIL_SIZE && playerX + SOIL_SIZE > cabbageX[i] * SOIL_SIZE) {
+        if (playerY == (cabbageY[i] + 4*i) * SOIL_SIZE) {
+          if (healthLeft < PLAYER_MAX_HEALTH){
+            healthLeft += 1;
+            cabbageX[i] = width;
+            cabbageY[i] = height;
+          }
+        }
+      }
+    }
+    
+    //bump into soldier
+    for (int i = 0; i < 6; i++){
+      if (playerX < soldierX[i] + SOIL_SIZE && playerX + SOIL_SIZE > soldierX[i]) {
+        if (playerY < (soldierY[i] + 4*i) * SOIL_SIZE + SOIL_SIZE && playerY + SOIL_SIZE > (soldierY[i] + 4*i) * SOIL_SIZE) {
+          playerX = PLAYER_INIT_X;
+          playerY = PLAYER_INIT_Y;
+          playerCol = (int) (playerX / SOIL_SIZE);
+          playerRow = (int) (playerY / SOIL_SIZE);
+          if (soilEmptyList[4][0] == true){
+            soilEmptyList[4][0] = !soilEmptyList[4][0];
+          }
+          healthLeft -= 1;
+        }
+      }
+    }
 
 		// Demo mode: Show the value of soilHealth on each soil
 		// (DO NOT CHANGE THE CODE HERE!)
@@ -390,6 +444,10 @@ void draw() {
 		popMatrix();
 
 		// Health UI
+    for (int i = 0; i < healthLeft; i++){
+      image(life, 10 + (LIFE_W + 20)*i, 10, LIFE_W, LIFE_H);
+    }
+    
 
 		break;
 
