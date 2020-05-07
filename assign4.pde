@@ -36,6 +36,12 @@ int playerMoveDirection = 0;
 int playerMoveTimer = 0;
 int playerMoveDuration = 15;
 
+//Empty soil
+int emptyNum = 0;
+int emptyLocate = 0;
+boolean[][] soilEmptyList;
+
+
 boolean demoMode = false;
 
 void setup() {
@@ -65,7 +71,8 @@ void setup() {
 	soil4 = loadImage("img/soil4.png");
 	soil5 = loadImage("img/soil5.png");
 
-	// Load PImage[][] soils
+	// Load PImage[][] soils 
+  // soil life
 	soils = new PImage[6][5];
 	for(int i = 0; i < soils.length; i++){
 		for(int j = 0; j < soils[i].length; j++){
@@ -74,6 +81,7 @@ void setup() {
 	}
 
 	// Load PImage[][] stones
+  //stones life
 	stones = new PImage[2][5];
 	for(int i = 0; i < stones.length; i++){
 		for(int j = 0; j < stones[i].length; j++){
@@ -97,6 +105,16 @@ void setup() {
 			soilHealth[i][j] = 15;
 		}
 	}
+  
+  //Empty soil list
+  soilEmptyList = new boolean[SOIL_COL_COUNT][SOIL_ROW_COUNT];
+  for (int j = 0; j < SOIL_ROW_COUNT; j++) {
+    emptyNum = floor(random(1,3));
+    for (int k = 0; k < emptyNum; k++){
+      emptyLocate = floor(random(8));
+      soilEmptyList[emptyLocate][j] = true;
+    }
+  }   
 
 	// Initialize soidiers and their position
 
@@ -154,12 +172,69 @@ void draw() {
 
 		for(int i = 0; i < soilHealth.length; i++){
 			for (int j = 0; j < soilHealth[i].length; j++) {
-
 				// Change this part to show soil and stone images based on soilHealth value
 				// NOTE: To avoid errors on webpage, you can either use floor(j / 4) or (int)(j / 4) to make sure it's an integer.
 				int areaIndex = floor(j / 4);
 				image(soils[areaIndex][4], i * SOIL_SIZE, j * SOIL_SIZE);
-				
+
+        // row 1-8
+				if ( j < 8 ){
+          if (i == j){
+            image(stones[0][4], i * SOIL_SIZE, j * SOIL_SIZE);
+            soilHealth[i][j] += 15;
+          }
+          
+        // row 9-16
+        }else if ( 7 < j && j < 16 ){
+          if( j % 4 == 0 || j % 4 == 3 ){
+            if ( i % 4 == 1 || i % 4 == 2 ){
+              image(stones[0][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+          }else{
+            if ( i % 4 == 0 || i % 4 == 3 ){
+              image(stones[0][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+          }
+        
+        // row 17-24
+        }else{
+          if ( j % 3 == 0 ){
+            if ( i % 3 != 1){
+              image(stones[0][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+            if( i % 3 == 0){
+              image(stones[1][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+          }else if ( j % 3 == 1 ){
+            if ( i % 3 != 0){
+              image(stones[0][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+            if( i % 3 == 2){
+              image(stones[1][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+          }else{
+            if ( i % 3 != 2){
+              image(stones[0][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+            if( i % 3 == 1){
+              image(stones[1][4], SOIL_SIZE * i, SOIL_SIZE * j);
+              soilHealth[i][j] += 15;
+            }
+          }
+        }
+        
+        //soil Empty
+        if (soilEmptyList[i][j] == true){
+          image(soilEmpty, SOIL_SIZE * i, SOIL_SIZE * j);
+          soilHealth[i][j] = 0;
+        }
 			}
 		}
 
@@ -175,7 +250,12 @@ void draw() {
 
 			// HINT:
 			// You can use playerCol and playerRow to get which soil player is currently on
-
+      
+      if (soilEmptyList[playerCol][playerRow + 1] == true){
+        playerY += SOIL_SIZE;
+        playerRow += 1;
+      }
+    
 			// Check if "player is NOT at the bottom AND the soil under the player is empty"
 			// > If so, then force moving down by setting playerMoveDirection and playerMoveTimer (see downState part below for example)
 			// > Else then determine player's action based on input state
